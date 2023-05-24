@@ -1,7 +1,7 @@
 import random
 import sys
 from faker import Faker
-from basic_table import db, User
+from editable_table import db, User
 
 
 def create_fake_users(n):
