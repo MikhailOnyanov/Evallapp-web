@@ -1,33 +1,50 @@
 from flask import Flask, render_template, request, abort
 from flask_sqlalchemy import SQLAlchemy
 
+import random
+import sys
+from faker import Faker
+
+
+def create_fake_users(n):
+    """Generate fake users."""
+    faker = Faker()
+    for i in range(n):
+        user = User(name=faker.name(),
+                    age=random.randint(20, 80),
+                    address=faker.address().replace('\n', ', '),
+                    phone=faker.phone_number(),
+                    email=faker.email())
+        db.session.add(user)
+    db.session.commit()
+    print(f'Added {n} fake users to the database.')
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+with app.app_context():
+    class User(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        name = db.Column(db.String(64), index=True)
+        age = db.Column(db.Integer, index=True)
+        address = db.Column(db.String(256))
+        phone = db.Column(db.String(20))
+        email = db.Column(db.String(120))
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), index=True)
-    age = db.Column(db.Integer, index=True)
-    address = db.Column(db.String(256))
-    phone = db.Column(db.String(20))
-    email = db.Column(db.String(120))
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'age': self.age,
-            'address': self.address,
-            'phone': self.phone,
-            'email': self.email
-        }
-
-
-db.create_all()
-
+        def to_dict(self):
+            return {
+                'id': self.id,
+                'name': self.name,
+                'age': self.age,
+                'address': self.address,
+                'phone': self.phone,
+                'email': self.email
+            }
+    #db.drop_all()
+    db.create_all()
+    #create_fake_users(10)
 
 @app.route('/')
 def index():
@@ -40,6 +57,7 @@ def data():
 
     # search filter
     search = request.args.get('search')
+
     if search:
         query = query.filter(db.or_(
             User.name.like(f'%{search}%'),
@@ -68,12 +86,15 @@ def data():
     length = request.args.get('length', type=int, default=-1)
     if start != -1 and length != -1:
         query = query.offset(start).limit(length)
-
-    # response
-    return {
+    r = {
         'data': [user.to_dict() for user in query],
         'total': total,
     }
+
+    print(r)
+
+    # response
+    return r
 
 
 @app.route('/api/data', methods=['POST'])

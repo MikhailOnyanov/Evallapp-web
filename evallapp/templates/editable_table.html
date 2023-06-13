@@ -1,71 +1,93 @@
 <html>
-  <head>
+<head>
     <title>Editable Table</title>
-    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
-  </head>
-  <body>
-    <div>
-      <h1>Editable Table for true курсач</h1>
-      <div class="table_choosing">
-        <label for="tables">Выбери таблицу:</label>
-        <select name="tables" id="tables">
-          <option value="table1">table1</option>
-          <option value="table2">table2</option>
-          <option value="table3">table3</option>
-          <option value="table4">table4</option>
-        </select>
-      </div>
-      <button> Import file </button>
-      <button> Export table </button>
+    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+</head>
+<body>
+<div>
+    <h1>Evallapp web</h1>
+    <p>Выберите таблицу: </p>
+    <p>
+        <div class="select-dropdown">
+            <select id="DbName" onchange="getDbName(this)">
+                <option selected value="{{ list[0] }}">{{list[0]}}</option>
+                {% for value in list[1:] %}
+                <option value="{{ value }}">{{value}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </p>
 
-      <hr>
+    <hr>
 
-      <div id="table"></div>
-      <div id="viz_for_table">
-        <p>Some graphics for data</p>
-        <img src="static/corrtable.png">
-      </div>
+    <div class="my_table" id="table"></div>
+
+    <div class="important_buttons">
+        <a href="#" class="button7"> Импорт Excel файла</a>
+        <a href="#" class="button7"> Экспорт таблицы в Excel</a>
     </div>
-    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
-    <script>
-      const tableDiv = document.getElementById('table');
+    <h3>Графики для таблицы "mistake_type_sum_by_work"</h3>
 
-      const updateUrl = (prev, query) => {
+    <div id="viz_for_table" class="special_div">
+        <div>
+            <p>Корреляция по пирсону</p>
+            <img src="../static/corrtable.png">
+        </div>
+        <div>
+            <p>Распределение по типам</p>
+            <img src="../static/dots.png">
+        </div>
+    </div>
+
+</div>
+<script src="{{url_for('static', filename='/script/unpkg.com_gridjs@6.0.6_l10n_dist_l10n.umd.js')}}"></script>
+<script src="../static/script/unpkg.com_gridjs@6.0.6_l10n_dist_l10n.umd.js"></script>
+<script>
+
+    const tableDiv = document.getElementById('table');
+
+    const updateUrl = (prev, query) => {
         return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
-      };
+    };
 
-      const editableCellAttributes = (data, row, col) => {
-          if (row) {
+    const editableCellAttributes = (data, row, col) => {
+        if (row) {
             return {contentEditable: 'true', 'data-element-id': row.cells[0].data};
-          }
-          else {
+        } else {
             return {};
-          }
-      };
+        }
+    };
+    var ruRU1 = ruRU;
+    mygrid = new gridjs.Grid({
+        // columns: [
+        //     {id: 'id', 'hidden': true},
+        //     {id: 'name', name: 'Name', 'attributes': editableCellAttributes},
+        //     {id: 'age', name: 'Age'},
+        //     {id: 'address', name: 'Address', sort: false, 'attributes': editableCellAttributes},
+        //     {id: 'phone', name: 'Phone Number', 'attributes': editableCellAttributes},
+        //     {id: 'email', name: 'Email'},
+        // ],
 
-      new gridjs.Grid({
         columns: [
-          { id: 'id', 'hidden': true },
-          { id: 'name', name: 'Name', 'attributes': editableCellAttributes },
-          { id: 'age', name: 'Age' },
-          { id: 'address', name: 'Address', sort: false, 'attributes': editableCellAttributes },
-          { id: 'phone', name: 'Phone Number', 'attributes': editableCellAttributes },
-          { id: 'email', name: 'Email' },
+            {% for elem in param2 %}
+                    {id: '{{elem}}', name: '{{elem}}', 'attributes': editableCellAttributes},
+                {% endfor %}
         ],
+
         server: {
-          url: '/api/data',
-          then: results => results.data,
-          total: results => results.total,
+            url: '/api/data',
+            then: results => results.data,
+            total: results => results.total,
         },
         search: {
-          enabled: true,
-          server: {
-            url: (prev, search) => {
-              return updateUrl(prev, {search});
+              enabled: true,
+              server: {
+                url: (prev, search) => {
+                  return updateUrl(prev, {search});
+                },
+              },
             },
-          },
-        },
         sort: {
           enabled: true,
           multiColumn: true,
@@ -85,44 +107,63 @@
             },
           },
         },
-      }).render(tableDiv);
+        language: lang
+    }).render(tableDiv);
 
-      let savedValue;
+    let savedValue;
 
-      tableDiv.addEventListener('focusin', ev => {
+    tableDiv.addEventListener('focusin', ev => {
         if (ev.target.tagName === 'TD') {
-          savedValue = ev.target.textContent;
+            savedValue = ev.target.textContent;
         }
-      });
+    });
 
-      tableDiv.addEventListener('focusout', ev => {
+    tableDiv.addEventListener('focusout', ev => {
         if (ev.target.tagName === 'TD') {
-          if (savedValue !== ev.target.textContent) {
-            fetch('/api/data', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({
-                id: ev.target.dataset.elementId,
-                [ev.target.dataset.columnId]: ev.target.textContent
-              }),
-            });
-          }
-          savedValue = undefined;
+            if (savedValue !== ev.target.textContent) {
+                fetch('/api/data', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        id: ev.target.dataset.elementId,
+                        [ev.target.dataset.columnId]: ev.target.textContent
+                    }),
+                });
+            }
+            savedValue = undefined;
         }
-      });
+    });
 
-      tableDiv.addEventListener('keydown', ev => {
+    tableDiv.addEventListener('keydown', ev => {
         if (ev.target.tagName === 'TD') {
-          if (ev.key === 'Escape') {
-            ev.target.textContent = savedValue;
-            ev.target.blur();
-          }
-          else if (ev.key === 'Enter') {
-            ev.preventDefault();
-            ev.target.blur();
-          }
+            if (ev.key === 'Escape') {
+                ev.target.textContent = savedValue;
+                ev.target.blur();
+            } else if (ev.key === 'Enter') {
+                ev.preventDefault();
+                ev.target.blur();
+            }
         }
-      });
-    </script>
-  </body>
+    });
+
+    async function getDbName(selectObject) {
+        var value = selectObject.value;
+        console.log(value);
+
+        mygrid.updateConfig({
+            columns: ['work_code', 'year', 'education_profile_number'],
+            server: {
+            url: '/api/data',
+            then: results => results.data,
+            total: results => results.total,
+        }
+      }).forceRender();
+
+        // const api_url = 'http://localhost:5000/fetch_dataset/';
+        // const request_url = api_url + '?' + new URLSearchParams({db_name: value});
+        // const response = fetch(request_url);
+        // console.log(response);
+    }
+</script>
+</body>
 </html>

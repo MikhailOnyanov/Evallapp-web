@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="db" uuid="6371d7d2-1734-401a-b736-fd1122d0b03c">
+    <data-source source="LOCAL" name="db" uuid="871412ee-66d6-439e-87d8-d25f0674df86">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\misa5\Desktop\курсовая 2022-2023\eval_app\Evallapp-web\db.sqlite</jdbc-url>
+      <jdbc-url>jdbc:sqlite:C:\Users\misa5\Desktop\cursach2023\eval_app\Evallapp-web\evallapp\db.sqlite</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
+      <libraries>
+        <library>
+          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.40.1/org/xerial/sqlite-jdbc/3.40.1.0/sqlite-jdbc-3.40.1.0.jar</url>
+        </library>
+      </libraries>
     </data-source>
   </component>
 </project>

@@ -1,19 +1,15 @@
 from __future__ import annotations
 
 # импортируем классы, используемые для определения атрибутов модели
-from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy import ForeignKey
 
 # импортируем объекты для создания отношения между объектами
 from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import DeclarativeBase
+from evallapp.db import Base
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 from typing import List, ClassVar
-
-
-class Base(DeclarativeBase):
-    pass
 
 
 # relation between works and mistakes
@@ -24,6 +20,14 @@ class WorksMistakes(Base):
     mistake_code: Mapped[int] = mapped_column(ForeignKey("mistakes_codes.mistake_code"))
     mistake_code_raw: ClassVar[str]
     mistakes_count: Mapped[int] = mapped_column()
+
+    def to_dict(self):
+        return {
+            "record_id": self.record_id,
+            "work_code": self.work_code,
+            "mistake_code": self.mistake_code,
+            "mistakes_count": self.mistakes_count
+        }
 
     def __repr__(self) -> str:
         return f"WorksMistakes(" \
@@ -42,6 +46,12 @@ class MistakesTypes(Base):
     mistake_type_transcript: Mapped[str] = mapped_column(nullable=False)
     # refers to mistakes_codes table, sets up a collection of codes for each type
     mistakes_codes: Mapped[List["MistakesCodes"]] = relationship(back_populates="mistake_type")
+
+    def to_dict(self):
+        return {
+            "mistake_type_id": self.mistake_type_id,
+            "mistake_type_transcript": self.mistake_type_transcript
+        }
 
     def __repr__(self) -> str:
         return f"MistakesTypes(" \
@@ -62,6 +72,13 @@ class MistakesCodes(Base):
     # children refers to parent
     mistake_type: Mapped["MistakesTypes"] = relationship(back_populates="mistakes_codes")
 
+    def to_dict(self):
+        return {
+            "mistake_code": self.mistake_code,
+            "mistake_type": self.mistake_type,
+            "mistake_code_transcript": self.mistake_code_transcript
+        }
+
     def __repr__(self) -> str:
         return f"MistakesCode(" \
                f"mistake_code={self.mistake_code!r}," \
@@ -80,6 +97,15 @@ class EducationProfile(Base):
     # refers to Works table, sets up a collection of Works for each type
     related_works: Mapped[List["Works"]] = relationship(back_populates="education_profile")
 
+    def to_dict(self):
+        return {
+            "education_profile_number": self.education_profile_number,
+            "grade_of_education": self.grade_of_education,
+            "form_of_education": self.form_of_education,
+            "discipline_title": self.discipline_title,
+            "course": self.course
+        }
+
     def __repr__(self) -> str:
         return f"EducationProfile(" \
                f"education_profile_number={self.year!r}," \
@@ -97,6 +123,14 @@ class Works(Base):
     education_profile_number: Mapped["str"] = mapped_column(ForeignKey("education_profiles.education_profile_number"), nullable=True)
     # children refers to parent
     education_profile: Mapped["EducationProfile"] = relationship(back_populates="related_works")
+
+    def to_dict(self):
+        return {
+            "work_code": self.work_code,
+            "year": self.year,
+            "education_profile_number": self.education_profile_number
+        }
+
     def __repr__(self) -> str:
         return f"Works(" \
                f"year={self.year!r}," \
