@@ -9,14 +9,14 @@
     <h1>Evallapp web</h1>
     <p>Выберите таблицу: </p>
     <p>
-        <div class="select-dropdown">
-            <select id="DbName" onchange="getDbName(this)">
-                <option selected value="{{ list[0] }}">{{list[0]}}</option>
-                {% for value in list[1:] %}
-                <option value="{{ value }}">{{value}}</option>
-                {% endfor %}
-            </select>
-        </div>
+    <div class="select-dropdown">
+        <select id="database-name-option">
+            <option selected value="{{ list[0] }}">{{list[0]}}</option>
+            {% for value in list[1:] %}
+            <option value="{{ value }}">{{value}}</option>
+            {% endfor %}
+        </select>
+    </div>
     </p>
 
     <hr>
@@ -39,11 +39,12 @@
             <img src="../static/dots.png">
         </div>
     </div>
-
 </div>
-<script src="{{url_for('static', filename='/script/unpkg.com_gridjs@6.0.6_l10n_dist_l10n.umd.js')}}"></script>
-<script src="../static/script/unpkg.com_gridjs@6.0.6_l10n_dist_l10n.umd.js"></script>
-<script>
+
+<script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script type="module">
+
+    import ru from "../static/script/mylang.js"
 
     const tableDiv = document.getElementById('table');
 
@@ -58,56 +59,50 @@
             return {};
         }
     };
-    var ruRU1 = ruRU;
-    mygrid = new gridjs.Grid({
+
+    var mygrid = new gridjs.Grid({
         // columns: [
         //     {id: 'id', 'hidden': true},
         //     {id: 'name', name: 'Name', 'attributes': editableCellAttributes},
-        //     {id: 'age', name: 'Age'},
-        //     {id: 'address', name: 'Address', sort: false, 'attributes': editableCellAttributes},
-        //     {id: 'phone', name: 'Phone Number', 'attributes': editableCellAttributes},
-        //     {id: 'email', name: 'Email'},
         // ],
-
         columns: [
             {% for elem in param2 %}
-                    {id: '{{elem}}', name: '{{elem}}', 'attributes': editableCellAttributes},
-                {% endfor %}
+                {id: '{{elem}}', name: '{{elem}}', 'attributes': editableCellAttributes},
+            {% endfor %}
         ],
-
         server: {
             url: '/api/data',
             then: results => results.data,
             total: results => results.total,
         },
         search: {
-              enabled: true,
-              server: {
+            enabled: true,
+            server: {
                 url: (prev, search) => {
-                  return updateUrl(prev, {search});
+                    return updateUrl(prev, {search});
                 },
-              },
             },
+        },
         sort: {
-          enabled: true,
-          multiColumn: true,
-          server: {
-            url: (prev, columns) => {
-              const columnIds = ['id', 'name', 'age', 'address', 'phone', 'email'];
-              const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
-              return updateUrl(prev, {sort});
+            enabled: true,
+            multiColumn: true,
+            server: {
+                url: (prev, columns) => {
+                    const columnIds = ['id', 'name', 'age', 'address', 'phone', 'email'];
+                    const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
+                    return updateUrl(prev, {sort});
+                },
             },
-          },
         },
         pagination: {
-          enabled: true,
-          server: {
-            url: (prev, page, limit) => {
-              return updateUrl(prev, {start: page * limit, length: limit});
+            enabled: true,
+            server: {
+                url: (prev, page, limit) => {
+                    return updateUrl(prev, {start: page * limit, length: limit});
+                },
             },
-          },
         },
-        language: lang
+        language: ru
     }).render(tableDiv);
 
     let savedValue;
@@ -145,25 +140,26 @@
             }
         }
     });
+    var db_select = document.querySelector('#database-name-option');
+    db_select.addEventListener("change", getDbName);
 
-    async function getDbName(selectObject) {
-        var value = selectObject.value;
+    function getDbName(event) {
+        let value = event.target.value;
         console.log(value);
+        const api_url = 'http://localhost:5000/api/fetch_dataset';
+        const request_url = api_url + '?' + new URLSearchParams({db_name: value});
+        const response = fetch(request_url);
+        console.log(response);
 
-        mygrid.updateConfig({
-            columns: ['work_code', 'year', 'education_profile_number'],
-            server: {
-            url: '/api/data',
-            then: results => results.data,
-            total: results => results.total,
-        }
-      }).forceRender();
-
-        // const api_url = 'http://localhost:5000/fetch_dataset/';
-        // const request_url = api_url + '?' + new URLSearchParams({db_name: value});
-        // const response = fetch(request_url);
-        // console.log(response);
-    }
+        // mygrid.updateConfig({
+        //     columns: ['work_code', 'year', 'education_profile_number'],
+        //     server: {
+        //         url: '/api/data/' + value,
+        //         then: results => results.data,
+        //         total: results => results.total,
+        //     }
+        // }).forceRender();
+    };
 </script>
 </body>
 </html>

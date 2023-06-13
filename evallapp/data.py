@@ -1,7 +1,7 @@
 import logging
 
 from flask import (
-    Blueprint, render_template, request, current_app
+    Blueprint, render_template, request, current_app, jsonify
 )
 from sqlalchemy import inspect
 
@@ -11,18 +11,20 @@ from .utils import get_table_by_name
 
 bp = Blueprint('data', __name__, url_prefix='/api')
 
-@bp.route('/fetch_dataset/<db_name>', methods=['GET'])
-def fetch_dataset(**kwargs):
-    print("hello")
-    if "db_name" in kwargs:
 
-        table_values = get_table_by_name(db, kwargs["db_name"])
-
+# returns
+@bp.route('/fetch_dataset', methods=['GET'])
+def fetch_dataset():
+    db_name = request.args.get('db_name')
+    if db_name:
+        print("privet")
+        table_values = get_table_by_name(db_name)
         # r = {
         #     'columns': table_values[0],
         #     'data': [elem.to_dict() for elem in table_values[1]],
         # }
-        return table_values
+        print(table_values)
+        return jsonify(table_values)
     else:
         return "Dataset not found", 400
 

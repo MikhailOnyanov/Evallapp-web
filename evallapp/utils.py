@@ -5,6 +5,7 @@ from .models.core import *
 from flask import current_app
 from .db import engine, db_session, Base
 
+
 def get_database_tables_names() -> list[str]:
     inspector = inspect(engine)
     schemas = inspector.get_schema_names()
@@ -29,26 +30,28 @@ def get_database_views_names() -> list[str]:
     return views
 
 
-def get_table_by_name(db_name: str) -> list[list[str], list[tuple]]:
+def get_table_by_name(db_name: str) -> dict | None:
     table_class = find_mapper_for_table(Base, db_name)
     res = db_session.scalars(select(table_class)).all()
     if res:
-        table_data: list[dict] = []
+        table_data = {}
         table_key: list[str] = list((res[0].to_dict()).keys())
-
+        table_data["columns"] = table_key
+        table_data["data"] = []
         row_counter = 0
 
         for val in res:
             row_counter += 1
             obj: dict = val.to_dict()
-            table_data.append(obj)
+            table_data["data"].append(obj)
+        table_data["total"] = row_counter
 
         current_app.logger.info(
             f"Collected {row_counter} rows of '{table_class.__name__}' table."
         )
-        return []
+        return table_data
     else:
-        return []
+        return None
 
 
 def find_mapper_for_table(base_class: DeclarativeMeta, target_name: str) -> Base | None:
@@ -67,6 +70,7 @@ def find_mapper_for_table(base_class: DeclarativeMeta, target_name: str) -> Base
     except Exception as ex:
         current_app.logger.warning(f"Problems while finding mapper for {target_name}. {ex}")
         return None
+
 
 """
 table_model: Table = Base.metadata.tables[db_name]

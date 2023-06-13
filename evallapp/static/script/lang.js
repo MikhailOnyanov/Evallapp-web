@@ -1,5 +1,7 @@
 !function (e, r) {
-    "object" == typeof exports && "undefined" != typeof module ? r(exports) : "function" == typeof define && define.amd ? define(["exports"], r) : r(((e || self).gridjs = e.gridjs || {}, e.gridjs.l10n = {}))
+    "object" == typeof exports && "undefined" != typeof module ?
+        r(exports) : "function" == typeof define && define.amd ?
+            define(["exports"], r) : r(((e || self).gridjs = e.gridjs || {}, e.gridjs.l10n = {}))
 }(this, function (e) {
     e.arSA = {
         search: {placeholder: "ابدأ البحث"},

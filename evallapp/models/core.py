@@ -75,7 +75,7 @@ class MistakesCodes(Base):
     def to_dict(self):
         return {
             "mistake_code": self.mistake_code,
-            "mistake_type": self.mistake_type,
+            "mistake_type_id": self.mistake_type_id,
             "mistake_code_transcript": self.mistake_code_transcript
         }
 
