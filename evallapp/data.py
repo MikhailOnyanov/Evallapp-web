@@ -7,7 +7,7 @@ from sqlalchemy import inspect
 
 from . import db_session
 from .models.core import *
-from .utils import get_table_by_name
+from .utils import get_table_by_name, prepare_columns_gridjs_format
 
 bp = Blueprint('data', __name__, url_prefix='/api')
 
@@ -18,11 +18,7 @@ def fetch_dataset():
     db_name = request.args.get('db_name')
     if db_name:
         print("privet")
-        table_values = get_table_by_name(db_name)
-        # r = {
-        #     'columns': table_values[0],
-        #     'data': [elem.to_dict() for elem in table_values[1]],
-        # }
+        table_values = get_table_by_name(db_name, prepare_columns=True)
         print(table_values)
         return jsonify(table_values)
     else:
@@ -31,8 +27,10 @@ def fetch_dataset():
 
 @bp.route('/data', methods=['GET'])
 def data():
+
     query = db_session.query(Works)
     total = query.count()
+
 
     # search filter
     search = request.args.get('search')
@@ -47,18 +45,18 @@ def data():
     sort = request.args.get('sort')
     if sort:
         pass
-        # order = []
-        # for s in sort.split(','):
-        #     direction = s[0]
-        #     name = s[1:]
-        #     if name not in ['name', 'age', 'email']:
-        #         name = 'name'
-        #     col = getattr(User, name)
-        #     if direction == '-':
-        #         col = col.desc()
-        #     order.append(col)
-        # if order:
-        #     query = query.order_by(*order)
+        order = []
+        for s in sort.split(','):
+            direction = s[0]
+            name = s[1:]
+            if name not in ['name', 'age', 'email']:
+                name = 'name'
+            col = getattr(User, name)
+            if direction == '-':
+                col = col.desc()
+            order.append(col)
+        if order:
+            query = query.order_by(*order)
 
     # pagination
     start = request.args.get('start', type=int, default=-1)
@@ -71,3 +69,4 @@ def data():
         'total': total,
     }
     return r
+

@@ -30,13 +30,13 @@ def get_database_views_names() -> list[str]:
     return views
 
 
-def get_table_by_name(db_name: str) -> dict | None:
+def get_table_by_name(db_name: str, prepare_columns: bool = False) -> dict | None:
     table_class = find_mapper_for_table(Base, db_name)
     res = db_session.scalars(select(table_class)).all()
     if res:
         table_data = {}
-        table_key: list[str] = list((res[0].to_dict()).keys())
-        table_data["columns"] = table_key
+        table_keys: list[str] = list((res[0].to_dict()).keys())
+        table_data["columns"] = table_keys
         table_data["data"] = []
         row_counter = 0
 
@@ -49,6 +49,8 @@ def get_table_by_name(db_name: str) -> dict | None:
         current_app.logger.info(
             f"Collected {row_counter} rows of '{table_class.__name__}' table."
         )
+        if prepare_columns:
+            table_data["columns"] = prepare_columns_gridjs_format(table_keys)
         return table_data
     else:
         return None
@@ -70,6 +72,16 @@ def find_mapper_for_table(base_class: DeclarativeMeta, target_name: str) -> Base
     except Exception as ex:
         current_app.logger.warning(f"Problems while finding mapper for {target_name}. {ex}")
         return None
+
+def prepare_columns_gridjs_format(columns: list) -> list[dict]:
+    result = []
+    for title in columns:
+        d = {}
+        d["id"] = title
+        # можно добавить предобработчик имён, чтобы кидать на фронт не "mistake_type_id", а "идентификатор ошибки"
+        d["name"] = title
+        result.append(d)
+    return result
 
 
 """

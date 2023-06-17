@@ -59,51 +59,22 @@
             return {};
         }
     };
-
+    var firstDataset = await getFullDatasetByName("works");
     var mygrid = new gridjs.Grid({
-        // columns: [
-        //     {id: 'id', 'hidden': true},
-        //     {id: 'name', name: 'Name', 'attributes': editableCellAttributes},
-        // ],
-        columns: [
-            {% for elem in param2 %}
-                {id: '{{elem}}', name: '{{elem}}', 'attributes': editableCellAttributes},
-            {% endfor %}
-        ],
-        server: {
-            url: '/api/data',
-            then: results => results.data,
-            total: results => results.total,
-        },
-        search: {
-            enabled: true,
-            server: {
-                url: (prev, search) => {
-                    return updateUrl(prev, {search});
-                },
-            },
-        },
+        columns: firstDataset.columns,
+        data: firstDataset.data,
+        search: true,
         sort: {
             enabled: true,
             multiColumn: true,
-            server: {
-                url: (prev, columns) => {
-                    const columnIds = ['id', 'name', 'age', 'address', 'phone', 'email'];
-                    const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
-                    return updateUrl(prev, {sort});
-                },
-            },
         },
-        pagination: {
-            enabled: true,
-            server: {
-                url: (prev, page, limit) => {
-                    return updateUrl(prev, {start: page * limit, length: limit});
-                },
-            },
-        },
+        pagination: true,
         language: ru
     }).render(tableDiv);
+
+    let columnIds = Object.keys(mygrid.config.pagination);
+    console.log(columnIds);
+    console.log(mygrid.config.data);
 
     let savedValue;
 
@@ -140,25 +111,31 @@
             }
         }
     });
-    var db_select = document.querySelector('#database-name-option');
-    db_select.addEventListener("change", getDbName);
 
-    function getDbName(event) {
+    const db_select = document.querySelector('#database-name-option');
+    db_select.addEventListener("change", updateGridJS);
+
+    async function getFullDatasetByName(name) {
+        console.log(name);
+        let host_url = 'http://localhost:5000'
+        let api_url = '/api/fetch_dataset';
+        let request_url = host_url + api_url + '?' + new URLSearchParams({db_name: name});
+        console.log(request_url);
+        let response = await fetch(request_url);
+        return await response.json()
+    }
+
+    async function updateGridJS(event) {
         let value = event.target.value;
         console.log(value);
-        const api_url = 'http://localhost:5000/api/fetch_dataset';
-        const request_url = api_url + '?' + new URLSearchParams({db_name: value});
-        const response = fetch(request_url);
-        console.log(response);
-
-        // mygrid.updateConfig({
-        //     columns: ['work_code', 'year', 'education_profile_number'],
-        //     server: {
-        //         url: '/api/data/' + value,
-        //         then: results => results.data,
-        //         total: results => results.total,
-        //     }
-        // }).forceRender();
+        let jsonData = await getFullDatasetByName(value);
+        let columns = jsonData.columns;
+        let data = jsonData.data;
+        console.log(columns, data);
+        await mygrid.updateConfig({
+            columns: columns,
+            data: data
+        }).forceRender();
     };
 </script>
 </body>
