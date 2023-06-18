@@ -3,9 +3,6 @@
 {% block content %}
 <head>
     <title>Editable Table</title>
-    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet"/>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
-
 </head>
 <body>
 <div>
@@ -20,8 +17,6 @@
         </select>
     </div>
     </p>
-
-    <hr>
 
     <div class="my_table" id="table"></div>
 
@@ -50,66 +45,29 @@
         </ul>
     </div>
 
-    <h3>Графики для таблицы "mistake_type_sum_by_work"</h3>
 
-    <div id="viz_for_table" class="special_div">
-        <div>
-            <p>Корреляция по пирсону</p>
-            <img src="../static/corrtable.png">
-        </div>
-        <div>
-            <p>Распределение по типам</p>
-            <img src="../static/dots.png">
-        </div>
-    </div>
 </div>
 
 <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
 <script src="https://unpkg.com/gridjs/dist/gridjs.js"></script>
 <script src="../static/script/mylang.js"></script>
 <script type="module">
-    import ru from "../static/script/mylang.js"
-    import {
-        Grid,
-        h
-    } from "../static/script/gridjs.js";
+    import ru from "../static/script/mylang.js";
+    import {getPreparedDatasetByName} from "../static/script/gridjsPreparation.js";
+    import {writeMsg} from "../static/script/customLog.js";
+    import {saveValue, enterVal, updateSaved} from "../static/script/gridjsCustomEvents.js";
 
-    var counter = 1; // global counter for messages
-    const messages_levels = {0: 'Info:', 1: 'Warning:', 2: 'Critical:'}
     const tableDiv = document.getElementById('table');
 
     const updateUrl = (prev, query) => {
         return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
     };
 
-    const editableCellAttributes = (data, row, col) => {
-        if (row) {
-            return {contentEditable: 'true', 'data-element-id': row.cells[0].data};
-        } else {
-            return {};
-        }
-    };
-
-    const firstDataset = await getFullDatasetByName("mistakes_codes");
-
-    for (const prop in firstDataset.columns) {
-        firstDataset.columns[prop]['attributes'] = editableCellAttributes;
-    }
-    firstDataset.columns.push(
-        {
-            name: 'Действия',
-            formatter: (cell, row) => {
-                return h('button', {
-                    className: 'btn btn-secondary',
-                    onClick: () => alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
-                }, 'Удалить');
-            }
-        }
-    );
+    const dataset = await getPreparedDatasetByName("mistakes_codes", "/api/fetch_dataset", true);
 
     const mygrid = new gridjs.Grid({
-        columns: firstDataset.columns,
-        data: firstDataset.data,
+        columns: dataset.columns,
+        data: dataset.data,
         search: true,
         sort: {
             enabled: true,
@@ -119,92 +77,25 @@
         language: ru
     }).render(tableDiv);
 
-    let columnIds = Object.keys(mygrid.config.pagination);
+    // если делать пагинацию
+    // let columnIds = Object.keys(mygrid.config.pagination);
 
-    let savedValue;
+    tableDiv.addEventListener('focusin', saveValue);
+    tableDiv.addEventListener('focusout', updateSaved);
+    tableDiv.customApi = '/api/data';
 
-    tableDiv.addEventListener('focusin', ev => {
-        if (ev.target.tagName === 'TD') {
-            savedValue = ev.target.textContent;
-        }
-    });
-
-    tableDiv.addEventListener('focusout', ev => {
-        if (ev.target.tagName === 'TD') {
-            if (savedValue !== ev.target.textContent) {
-                console.log(
-                    JSON.stringify({
-                        id: ev.target.dataset.elementId,
-                        [ev.target.dataset.columnId]: ev.target.textContent
-                    })
-                );
-                let tableName = document.querySelector('#database-name-option').value;
-                writeMsg(`Таблица для изменения: ${tableName}`, 0);
-                fetch('/api/data', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        id: ev.target.dataset.elementId,
-                        table_name: tableName,
-                        data: {[ev.target.dataset.columnId]: ev.target.textContent}
-                    }),
-                });
-            }
-            savedValue = undefined;
-        }
-    });
-
-    tableDiv.addEventListener('keydown', ev => {
-        if (ev.target.tagName === 'TD') {
-            if (ev.key === 'Escape') {
-                ev.target.textContent = savedValue;
-                ev.target.blur();
-            } else if (ev.key === 'Enter') {
-                ev.preventDefault();
-                ev.target.blur();
-            }
-        }
-    });
+    tableDiv.addEventListener('keydown', enterVal);
 
     const db_select = document.querySelector('#database-name-option');
     db_select.addEventListener("change", updateGridJS);
 
-    function writeMsg(msg, lvl) {
-        let ms_field = document.querySelector('#sys-msgs');
-        let node = document.createElement('li');
-        node.appendChild(document.createTextNode(
-            messages_levels[lvl] + `[${counter}]:` + " " + msg)
-        );
-        // добавляем сообщение
-        ms_field.appendChild(node);
-        counter += 1;
-        // скроллим до самого низа
-        document.querySelector('.system-messages').scrollTop = document.querySelector('.system-messages').scrollHeight;
-    }
-
-    async function getFullDatasetByName(name) {
-        let host_url = 'http://localhost:5000'
-        let api_url = '/api/fetch_dataset';
-        let request_url = host_url + api_url + '?' + new URLSearchParams({db_name: name});
-        console.log(request_url);
-        let response = await fetch(request_url);
-        writeMsg(`получил данные: ${name}`, 0)
-        return await response.json()
-    }
-
     async function updateGridJS(event) {
-        let value = event.target.value;
-        console.log(value);
-        let jsonData = await getFullDatasetByName(value);
-        let columns = jsonData.columns;
-        let data = jsonData.data;
-        console.log(columns, data);
-        for (const prop in columns) {
-            columns[prop]['attributes'] = editableCellAttributes;
-        }
+        let datasetName = event.target.value;
+        let dataset = await getPreparedDatasetByName(datasetName, "/api/fetch_dataset", true);
+        writeMsg(`получил данные: ${datasetName}`, 0);
         await mygrid.updateConfig({
-            columns: columns,
-            data: data
+            columns: dataset.columns,
+            data: dataset.data
         }).forceRender();
     }
 </script>

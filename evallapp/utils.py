@@ -1,4 +1,4 @@
-from sqlalchemy import inspect, Table, select
+from sqlalchemy import inspect, Table, select, Row
 from sqlalchemy.orm import DeclarativeMeta
 
 from .models.core import *
@@ -56,6 +56,30 @@ def get_table_by_name(db_name: str, prepare_columns: bool = False) -> dict | Non
         return None
 
 
+def get_view_by_name(view_name: str):
+    view = Table(view_name, Base.metadata, autoload_with=engine)
+    if view is not None:
+        table_data = {}
+        row_counter = 0
+
+        table_keys: list[str] = []
+        for column in view.columns:
+            table_keys.append(column.key)
+        table_data["columns"] = sorted(table_keys)
+
+        table_data["data"] = []
+        table_values: list[tuple] = db_session.query(view)
+        for val in table_values:
+            val = dict(val._mapping)
+            table_data["data"].append(val)
+            row_counter += 1
+        table_data["total"] = row_counter
+        current_app.logger.info(
+            f"Collected {row_counter} rows of '{view_name}' view."
+        )
+        return table_data
+
+
 def find_mapper_for_table(base_class: DeclarativeMeta, target_name: str) -> Base | None:
     d = {}
     for mapper in base_class.registry.mappers:
@@ -83,6 +107,20 @@ def prepare_columns_gridjs_format(columns: list) -> list[dict]:
         d["name"] = title
         result.append(d)
     return result
+
+
+def update_data_for_mapped_table(table_name: str, key: str, data_to_change: dict):
+    try:
+        t = find_mapper_for_table(Base, table_name)
+        mapped_object = db_session.query(t).get(key)
+        current_app.logger.info(f"Found mapper for {table_name}")
+        atr_key = list(data_to_change.keys())[0]
+        data_to_write = data_to_change[atr_key]
+        setattr(mapped_object, atr_key, data_to_write)
+        db_session.commit()
+        current_app.logger.info(f"Committed changes to {table_name}")
+    except Exception as ex:
+        current_app.logger.info(f"Unpredicted error {ex}")
 
 
 """
