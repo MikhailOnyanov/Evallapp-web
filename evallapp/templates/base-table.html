@@ -5,6 +5,7 @@
     <title>Editable Table</title>
     <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/style.css') }}">
+
 </head>
 <body>
 <div>
@@ -64,13 +65,19 @@
 </div>
 
 <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+<script src="https://unpkg.com/gridjs/dist/gridjs.js"></script>
 <script src="../static/script/mylang.js"></script>
 <script type="module">
     import ru from "../static/script/mylang.js"
+    import {
+        Grid,
+        h
+    } from "../static/script/gridjs.js";
 
-    var counter = 1; // global counter for errors
+    var counter = 1; // global counter for messages
     const messages_levels = {0: 'Info:', 1: 'Warning:', 2: 'Critical:'}
     const tableDiv = document.getElementById('table');
+
     const updateUrl = (prev, query) => {
         return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
     };
@@ -88,6 +95,17 @@
     for (const prop in firstDataset.columns) {
         firstDataset.columns[prop]['attributes'] = editableCellAttributes;
     }
+    firstDataset.columns.push(
+        {
+            name: 'Действия',
+            formatter: (cell, row) => {
+                return h('button', {
+                    className: 'btn btn-secondary',
+                    onClick: () => alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
+                }, 'Удалить');
+            }
+        }
+    );
 
     const mygrid = new gridjs.Grid({
         columns: firstDataset.columns,
@@ -102,8 +120,6 @@
     }).render(tableDiv);
 
     let columnIds = Object.keys(mygrid.config.pagination);
-    console.log(columnIds);
-    console.log(mygrid.config.data);
 
     let savedValue;
 
@@ -122,12 +138,15 @@
                         [ev.target.dataset.columnId]: ev.target.textContent
                     })
                 );
+                let tableName = document.querySelector('#database-name-option').value;
+                writeMsg(`Таблица для изменения: ${tableName}`, 0);
                 fetch('/api/data', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         id: ev.target.dataset.elementId,
-                        [ev.target.dataset.columnId]: ev.target.textContent
+                        table_name: tableName,
+                        data: {[ev.target.dataset.columnId]: ev.target.textContent}
                     }),
                 });
             }
@@ -180,6 +199,9 @@
         let columns = jsonData.columns;
         let data = jsonData.data;
         console.log(columns, data);
+        for (const prop in columns) {
+            columns[prop]['attributes'] = editableCellAttributes;
+        }
         await mygrid.updateConfig({
             columns: columns,
             data: data
