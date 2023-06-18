@@ -27,10 +27,8 @@ def fetch_dataset():
 
 @bp.route('/data', methods=['GET'])
 def data():
-
     query = db_session.query(Works)
     total = query.count()
-
 
     # search filter
     search = request.args.get('search')
@@ -69,4 +67,3 @@ def data():
         'total': total,
     }
     return r
-

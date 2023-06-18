@@ -73,6 +73,7 @@ def find_mapper_for_table(base_class: DeclarativeMeta, target_name: str) -> Base
         current_app.logger.warning(f"Problems while finding mapper for {target_name}. {ex}")
         return None
 
+
 def prepare_columns_gridjs_format(columns: list) -> list[dict]:
     result = []
     for title in columns:

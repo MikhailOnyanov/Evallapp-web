@@ -13,4 +13,3 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_RECORD_QUERIES = False
-    MY_VAR = os.environ.get('MY_VAR')
