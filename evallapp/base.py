@@ -29,6 +29,3 @@ def base():
     param2 = ["work_code", "year", "education_profile_number"]
     get_table_by_name("works")
     return render_template('base-table.html', list=tables, param2=param2)
-
-
-

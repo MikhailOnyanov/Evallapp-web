@@ -20,7 +20,7 @@ class WorksMistakes(Base):
     mistake_code: Mapped[int] = mapped_column(ForeignKey("mistakes_codes.mistake_code"))
     mistake_code_raw: ClassVar[str]
     mistakes_count: Mapped[int] = mapped_column()
-    editable_attributes: list[str] = ['record_id', 'work_code', 'mistake_code', 'mistakes_count']
+    editable_attributes: ClassVar = ['record_id', 'work_code', 'mistake_code', 'mistakes_count']
 
     def to_dict(self):
         return {
@@ -47,7 +47,7 @@ class MistakesTypes(Base):
     mistake_type_transcript: Mapped[str] = mapped_column(nullable=False)
     # refers to mistakes_codes table, sets up a collection of codes for each type
     mistakes_codes: Mapped[List["MistakesCodes"]] = relationship(back_populates="mistake_type")
-    editable_attributes: list[str] = ['mistake_type_transcript']
+    editable_attributes: ClassVar = ['mistake_type_transcript']
 
     def to_dict(self):
         return {
@@ -73,7 +73,7 @@ class MistakesCodes(Base):
     mistake_code_transcript: Mapped[str] = mapped_column(nullable=False)
     # children refers to parent
     mistake_type: Mapped["MistakesTypes"] = relationship(back_populates="mistakes_codes")
-    editable_attributes: list[str] = ['mistake_type_id', 'mistake_code_transcript']
+    editable_attributes: ClassVar = ['mistake_type_id', 'mistake_code_transcript']
 
     def to_dict(self):
         return {
@@ -99,7 +99,7 @@ class EducationProfile(Base):
     course: Mapped[int] = mapped_column()
     # refers to Works table, sets up a collection of Works for each type
     related_works: Mapped[List["Works"]] = relationship(back_populates="education_profile")
-    editable_attributes: list[str] = ['education_profile_number', 'grade_of_education', 'form_of_education',
+    editable_attributes: ClassVar = ['education_profile_number', 'grade_of_education', 'form_of_education',
                                       'discipline_title', 'course', 'record_id']
 
     def to_dict(self):
@@ -129,7 +129,7 @@ class Works(Base):
                                                             nullable=True)
     # children refers to parent
     education_profile: Mapped["EducationProfile"] = relationship(back_populates="related_works")
-    editable_attributes: list[str] = ['work_code', 'year', 'education_profile_number']
+    editable_attributes: ClassVar = ['work_code', 'year', 'education_profile_number']
 
     def to_dict(self):
         return {
