@@ -19,25 +19,30 @@ import {
     h
 } from "./gridjs.js";
 
-export async function getPreparedDatasetByName(name, api_url, prepare) {
+export async function getPreparedDatasetByName(name, api_url, prepareBool) {
     const dataset = await getFullDatasetByName(name, api_url);
-    if (prepare) {
-        for (const prop in dataset.columns) {
-            dataset.columns[prop]['attributes'] = editableCellAttributes;
-        }
-        dataset.columns.push(
-            {
-                name: 'Действия',
-                formatter: (cell, row) => {
-                    return h('button', {
-                        className: 'btn btn-secondary',
-                        onClick: () => alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
-                    }, 'Удалить');
-                }
+    try {
+        if (prepareBool) {
+            for (const prop in dataset.columns) {
+                dataset.columns[prop]['attributes'] = editableCellAttributes;
             }
-        );
+            dataset.columns.push(
+                {
+                    name: 'Действия',
+                    formatter: (cell, row) => {
+                        return h('button', {
+                            className: 'btn btn-secondary',
+                            onClick: () => alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
+                        }, 'Удалить');
+                    }
+                }
+            );
+        } else return dataset
+        return dataset
     }
-    console.log(dataset);
-    return dataset
+    catch (ex) {
+        console.log(ex)
+        return dataset
+    }
 }
 

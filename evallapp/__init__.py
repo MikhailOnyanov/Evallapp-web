@@ -7,23 +7,25 @@ from flask_cors import CORS
 
 def create_app(config_class=Config):
 
-    # create and configure the app
+    # Create and configure the App
     app = Flask(__name__)
     CORS(app)
     app.config.from_object(config_class)
 
-    # register function for handling db connections
+    # Register function for handling db connections
     @app.teardown_appcontext
     def shutdown_session(exception=None):
         db_session.remove()
 
-    # set up db for app
+    # Set up db for app
     init_db()
 
     from . import base
     app.register_blueprint(base.bp)
     from . import data
     app.register_blueprint(data.bp)
+    from . import forms
+    app.register_blueprint(forms.bp)
 
     return app
 

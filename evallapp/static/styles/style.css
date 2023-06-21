@@ -110,3 +110,16 @@ li#sys-msgs {
     line-height: 20px;
     border-bottom: black 1px solid;
 }
+
+.area-before-table{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    height: 90px;
+}
+
+.area-before-table button{
+    height: auto;
+    align-self: center;
+    font-size: 24px;
+}
