@@ -123,6 +123,18 @@ def update_data_for_mapped_table(table_name: str, key: str, data_to_change: dict
         current_app.logger.info(f"Unpredicted error {ex}")
 
 
+def delete_data_from_table(table_name: str, key: str):
+    try:
+        t = find_mapper_for_table(Base, table_name)
+        mapped_object = db_session.query(t).get(key)
+        current_app.logger.info(f"Found mapper for {table_name}")
+        db_session.delete(mapped_object)
+        db_session.commit()
+        current_app.logger.info(f"Committed changes to {table_name}. Deleted {mapped_object}")
+    except Exception as ex:
+        current_app.logger.info(f"Unpredicted error {ex}")
+
+
 """
 table_model: Table = Base.metadata.tables[db_name]
 print(table_model)

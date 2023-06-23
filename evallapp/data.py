@@ -8,7 +8,7 @@ from sqlalchemy import inspect
 from . import db_session
 from .models.core import *
 from .utils import get_table_by_name, prepare_columns_gridjs_format, find_mapper_for_table, \
-    update_data_for_mapped_table, get_view_by_name
+    update_data_for_mapped_table, get_view_by_name, delete_data_from_table
 
 bp = Blueprint('data', __name__, url_prefix='/api')
 
@@ -44,6 +44,22 @@ def update():
         data_to_change = data['data']
         update_data_for_mapped_table(table_name, key, data_to_change)
         return Response(f"Изменения в '{table_name}' внесены: {key}:{data_to_change}", status=200,
+                        mimetype='application/json')
+    except Exception as ex:
+        return Response(f"Текст ошибки: {ex}", status=500, mimetype='application/json')
+
+
+@bp.route('/delete_row', methods=['POST'])
+def delete_row():
+    data = request.get_json()
+    if 'table_name' not in data:
+        abort(400)
+    try:
+        table_name = data['table_name']
+        print(data.keys())
+        key = data["id"]
+        delete_data_from_table(table_name, key)
+        return Response(f"Изменения в '{table_name}' внесены: Запись {key}: удалён", status=200,
                         mimetype='application/json')
     except Exception as ex:
         return Response(f"Текст ошибки: {ex}", status=500, mimetype='application/json')

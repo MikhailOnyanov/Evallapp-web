@@ -1,3 +1,5 @@
+import {writeMsg} from "./customLog.js";
+
 const editableCellAttributes = (data, row, col) => {
     if (row) {
         return {contentEditable: 'true', 'data-element-id': row.cells[0].data};
@@ -21,6 +23,16 @@ import {
 
 export async function getPreparedDatasetByName(name, api_url, prepareBool) {
     const dataset = await getFullDatasetByName(name, api_url);
+
+    // fetch(api_url, {
+    //                 method: 'POST',
+    //                 headers: {'Content-Type': 'application/json'},
+    //                 body: JSON.stringify({
+    //                     id: ev.target.dataset.elementId,
+    //                     table_name: tableName,
+    //                     data: {[ev.target.dataset.columnId]: ev.target.textContent}
+    //                 }),
+    //             });
     try {
         if (prepareBool) {
             for (const prop in dataset.columns) {
@@ -32,15 +44,26 @@ export async function getPreparedDatasetByName(name, api_url, prepareBool) {
                     formatter: (cell, row) => {
                         return h('button', {
                             className: 'btn btn-secondary',
-                            onClick: () => alert(`Editing "${row.cells[0].data}" "${row.cells[1].data}"`)
+                            onClick: async (ev) => {
+                                let delete_url = '/api/delete_row'
+                                console.log(currentDatasetName);
+                                console.log(ev.target.dataset.elementId);
+                                fetch(delete_url, {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        id: row.cells[0].data,
+                                        table_name: currentDatasetName
+                                    }),
+                                });
+                            }
                         }, 'Удалить');
                     }
                 }
             );
         } else return dataset
         return dataset
-    }
-    catch (ex) {
+    } catch (ex) {
         console.log(ex)
         return dataset
     }

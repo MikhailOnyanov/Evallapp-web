@@ -37,6 +37,7 @@ db_select.addEventListener("change", updateGridJS);
 
 async function updateGridJS(event) {
     let datasetName = event.target.value;
+    currentDatasetName = datasetName;
     let dataset = await getPreparedDatasetByName(datasetName, apiAdr, prepareBool);
     writeMsg(`получил данные: ${datasetName}`, 0);
     await mygrid.updateConfig({
