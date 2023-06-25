@@ -1,9 +1,10 @@
 import ru from "./mylang.js";
 import {getPreparedDatasetByName} from "./gridjsPreparation.js";
 import {writeMsg} from "./customLog.js";
-import {saveValue, enterVal, updateSaved} from "./gridjsCustomEvents.js";
+import {saveValue, enterVal, updateSaved, downloadButtonOnClick} from "./gridjsCustomEvents.js";
 
 const tableDiv = document.getElementById('table');
+const downloadDatasetButton = document.getElementById('export-btn');
 
 const updateUrl = (prev, query) => {
     return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
@@ -25,6 +26,9 @@ const mygrid = new gridjs.Grid({
 
 // если делать пагинацию
 // let columnIds = Object.keys(mygrid.config.pagination);
+
+// Загрузка текущего датасета
+downloadDatasetButton.addEventListener('click', downloadButtonOnClick);
 
 tableDiv.addEventListener('focusin', saveValue);
 tableDiv.addEventListener('focusout', updateSaved);

@@ -1,14 +1,17 @@
 import logging
+import io
 
+import pandas
+import pandas as pd
 from flask import (
-    Blueprint, render_template, request, current_app, jsonify, abort, Response
+    Blueprint, render_template, request, current_app, jsonify, abort, Response, send_file
 )
-from sqlalchemy import inspect
+from sqlalchemy import inspect, select
 
-from . import db_session
+from .db import db_session, engine
 from .models.core import *
 from .utils import get_table_by_name, prepare_columns_gridjs_format, find_mapper_for_table, \
-    update_data_for_mapped_table, get_view_by_name, delete_data_from_table
+    update_data_for_mapped_table, get_view_by_name, delete_data_from_table, get_table_data_xlsx
 
 bp = Blueprint('data', __name__, url_prefix='/api')
 
@@ -63,3 +66,22 @@ def delete_row():
                         mimetype='application/json')
     except Exception as ex:
         return Response(f"Текст ошибки: {ex}", status=500, mimetype='application/json')
+
+
+# получает имя бд, которую мы отправляем в формате XLSX
+@bp.route('/get_df_xlsx', methods=['GET'])
+def get_df_xlsx():
+    table_name = request.args.get('table_name')
+    if not table_name:
+        abort(400)
+    try:
+        file_bytes = get_table_data_xlsx(table_name)
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        return send_file(
+            io.BytesIO(file_bytes),
+            mimetype=mimetype,
+            download_name='test.xlsx',
+            as_attachment=True
+        )
+    except Exception as ex:
+        current_app.logger.warning(f"Неизвестная ошибка при получении таблицы БД в формате Excel: {ex}")

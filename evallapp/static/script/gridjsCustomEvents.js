@@ -54,3 +54,24 @@ export function enterVal(ev) {
     }
 }
 
+export async function downloadButtonOnClick(ev) {
+    console.log('clicked download button!')
+    let host_url = 'http://localhost:5000'
+    let request_url = host_url + downloadButtonApi + '?' + new URLSearchParams({table_name: currentDatasetName});
+    console.log(request_url);
+    let response = await fetch(request_url);
+    let blobResponse = await response.blob();
+    const fileName = currentDatasetName + '.xlsx';
+    downloadExcelSilently( blobResponse, fileName )
+}
+
+function downloadExcelSilently( blobExcelFile, filename ) {
+    const url = window.URL.createObjectURL( blobExcelFile );
+    const hiddenAnchor = document.createElement( "a" );
+    hiddenAnchor.style.display = "none";
+    hiddenAnchor.href = url;
+    hiddenAnchor.download = filename;
+    document.body.appendChild( hiddenAnchor );
+    hiddenAnchor.click();
+    window.URL.revokeObjectURL( url );
+}

@@ -16,7 +16,5 @@ db_session = scoped_session(
 Base: DeclarativeMeta = declarative_base()
 Base.query = db_session.query_property()
 
-
 def init_db():
-    from evallapp.models.core import Works, WorksMistakes, MistakesCodes, MistakesTypes, EducationProfile
     Base.metadata.create_all(bind=engine)

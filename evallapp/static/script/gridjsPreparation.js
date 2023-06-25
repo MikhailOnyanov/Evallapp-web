@@ -23,16 +23,6 @@ import {
 
 export async function getPreparedDatasetByName(name, api_url, prepareBool) {
     const dataset = await getFullDatasetByName(name, api_url);
-
-    // fetch(api_url, {
-    //                 method: 'POST',
-    //                 headers: {'Content-Type': 'application/json'},
-    //                 body: JSON.stringify({
-    //                     id: ev.target.dataset.elementId,
-    //                     table_name: tableName,
-    //                     data: {[ev.target.dataset.columnId]: ev.target.textContent}
-    //                 }),
-    //             });
     try {
         if (prepareBool) {
             for (const prop in dataset.columns) {

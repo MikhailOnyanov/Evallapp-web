@@ -1,3 +1,6 @@
+import io
+
+import pandas
 from sqlalchemy import inspect, Table, select, Row
 from sqlalchemy.orm import DeclarativeMeta
 
@@ -134,22 +137,34 @@ def delete_data_from_table(table_name: str, key: str):
     except Exception as ex:
         current_app.logger.info(f"Unpredicted error {ex}")
 
-
-"""
-table_model: Table = Base.metadata.tables[db_name]
-print(table_model)
-        print(type(table_model))
-        print(res)
-columns: list[str] = []
-
-        for column in table_model.columns:
-            columns.append(column.key)
-
-        print(columns)
-
-        table_values: list[tuple] = db_session.query(table_model)
-        for val in table_values:
-            print(val)
-            print(type(val))
-            break
-"""
+def get_table_data_xlsx(table_name) -> bytes:
+    #stmt = select(find_mapper_for_table(Base, table_name))
+    #view = Table(view_name, Base.metadata, autoload_with=engine)
+    # df = pandas.read_sql_query(
+    #     stmt, db_session.bind
+    # )
+    try:
+        stmt = select(Table(table_name, Base.metadata, autoload_with=engine))
+        df = pandas.read_sql_query(stmt, db_session.bind)
+        file_boof = io.BytesIO()
+        df.to_excel(file_boof)
+        return file_boof.getvalue()
+    except Exception as ex:
+        current_app.logger.warning(f"Can't find view with name: {ex}")
+        # Find mapped table or return empty file
+        stmt = select(find_mapper_for_table(Base, table_name))
+        df = pandas.read_sql_query(stmt, db_session.bind)
+        file_boof = io.BytesIO()
+        # Writes file data to file_boof var
+        df.to_excel(file_boof)
+        return file_boof.getvalue()
+    #
+    # for csv:
+    # f = bytes(df.to_csv(lineterminator='\r\n', index=False), encoding='utf-8')
+    # return send_file(
+    #     # io.BytesIO(f),
+    #     io.BytesIO(boof.getvalue()),
+    #     mimetype='application/vnd.ms-excel',
+    #     download_name='test.xlsx',
+    #     as_attachment=True
+    # )
